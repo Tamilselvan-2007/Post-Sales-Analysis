@@ -21,7 +21,8 @@ def run_missing_detection(image_input: ImageInput) -> List[Dict]:
     results = model.predict(
         source=image_input,
         conf=CONFIDENCE,   # ✅ CONFIDENCE FILTER APPLIED
-        verbose=False
+        verbose=False,
+        device='cpu'
     )
 
     if not results:

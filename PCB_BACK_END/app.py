@@ -5,6 +5,8 @@ from flask_socketio import SocketIO
 
 from routes.upload_routes import upload_bp
 from routes.detect_routes import detect_bp
+from routes.debug_routes import debug_bp
+import traceback
 
 LOG_FORMAT = "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
 
@@ -33,6 +35,7 @@ def create_app() -> Flask:
     # Register Blueprints
     app.register_blueprint(upload_bp)
     app.register_blueprint(detect_bp)
+    app.register_blueprint(debug_bp)
 
     register_frontend_routes(app)
     return app
@@ -63,7 +66,7 @@ def register_error_handlers(app: Flask) -> None:
 
     @app.errorhandler(500)
     def internal_server_error(error):
-        return {"success": False, "error": {"message": "Internal Server Error"}}, 500
+        return {"success": False, "error": {"message": "Internal Server Error", "trace": traceback.format_exc()}}, 500
 
 
 
