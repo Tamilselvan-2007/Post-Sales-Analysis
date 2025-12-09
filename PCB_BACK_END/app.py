@@ -113,19 +113,19 @@ def register_frontend_routes(app: Flask):
             return redirect(url_for("admin_login") + "?error=invalid")
         return redirect(url_for("user_login") + "?error=invalid")
 
-    @app.route("/missing")
+    @app.route("/missing", methods=['GET', 'POST'])
     def missing_page():
         return render_template("third_page.html", page_type="missing")
 
-    @app.route("/burnt")
+    @app.route("/burnt", methods=['GET', 'POST'])
     def burnt_page():
         return render_template("third_page.html", page_type="burnt")
 
-    @app.route("/voltage")
+    @app.route("/voltage", methods=['GET', 'POST'])
     def voltage_page():
         return render_template("fifth_page.html")
 
-    @app.route("/diagnosis_complete")
+    @app.route("/diagnosis_complete", methods=['GET', 'POST'])
     def diagnosis_complete():
         return render_template("diagnosis_page.html")
         
