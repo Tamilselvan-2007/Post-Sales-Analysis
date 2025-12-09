@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PCB Verification — PCB Diagnostic</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+  <video class="bg-video" src="{{ url_for('static', filename='video/check_gif_3.webm') }}" autoplay muted loop
+    playsinline></video>
+  <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+
+  <div class="container">
+    <h1 style="text-align:center;" class="intro1">PCB Diagnostic System</h1>
+    <p style="text-align:center;" class="intro">Defect Analysis Check Box</p>
+
+    <div class="checkbox-group">
+
+      <div class="row">
+        <label><input type="checkbox" id="trackDamage" disabled> Check for Missing Components</label>
+
+        <!-- UPDATED ✔ -->
+        <button class="check-btn" id="btnMissing" onclick="location.href='{{ url_for('missing_page') }}'">Check</button>
+      </div>
+
+      <div class="row">
+        <label><input type="checkbox" id="burntComponent" disabled> Check for Burnt Components</label>
+
+        <!-- UPDATED ✔ -->
+        <button class="check-btn" id="btnBurnt" onclick="location.href='{{ url_for('burnt_page') }}'">Check</button>
+      </div>
+
+      <div class="row">
+        <label><input type="checkbox" id="voltageAnalysis" disabled> Voltage Analysis</label>
+
+        <!-- UPDATED ✔ -->
+        <button class="check-btn" id="btnVoltage" onclick="goToVoltage()">Check</button>
+      </div>
+
+    </div>
+
+    <div id="faultBox" class="fault-box">
+      <strong>Detected Faults:</strong>
+      <p id="faultDetails">Track damaged near IC3; Missing resistor at R2.</p>
+    </div>
+
+    <div class="btn-row">
+      <button class="check-btn" onclick="goBack()">← Back</button>
+    </div>
+
+  </div>
+
+  <div class="side-overlay" id="sideOverlay"></div>
+  <aside class="side-panel" id="sidePanel">
+    <img class="avatar" src="{{ url_for('static', filename='images/Technician_image.webp') }}" alt="Technician" />
+    <div class="tech-field">
+      <div>Technician Name</div>
+      <div id="tName">-</div>
+    </div>
+    <div class="tech-field">
+      <div>Technician ID</div>
+      <div id="tId">-</div>
+    </div>
+    <div class="tech-field">
+      <div>Technician Rating</div>
+      <div id="tRating">-</div>
+    </div>
+
+    <button class="logout-btn" id="homeBtn"><img class="btn-icon" src="{{ url_for('static', filename='icon_home.png') }}"
+        alt="">Logout</button>
+
+  </aside>
+
+  <footer style="color:whitesmoke; font-size: 25px;">© 2025 PCB Diagnostic System | Verification Module</footer>
+
+  <script>
+    const faultsDetected = false;
+
+    window.onload = function () {
+      if (faultsDetected) {
+        document.getElementById("faultBox").style.display = "block";
+        document.getElementById("trackDamage").checked = false;
+      }
+      if (localStorage.getItem('missing_done') === 'true') {
+        const cb = document.getElementById('trackDamage');
+        cb.disabled = false; cb.checked = true;
+      }
+      if (localStorage.getItem('burnt_done') === 'true') {
+        const cb = document.getElementById('burntComponent');
+        cb.disabled = false; cb.checked = true;
+      }
+      if (localStorage.getItem('voltage_done') === 'true') {
+        const cb = document.getElementById('voltageAnalysis');
+        cb.disabled = false; cb.checked = true;
+      }
+      updateGenerateState();
+    };
+
+    function goToVoltage() {
+      localStorage.setItem("voltageVerified", "false");
+      window.location.href = "{{ url_for('voltage_page') }}";
+    }
+
+    function goBack() {
+      window.history.back();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      ['trackDamage', 'burntComponent', 'voltageAnalysis'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.addEventListener('change', updateGenerateState); }
+      });
+    });
+
+    const btn = document.getElementById('hamburger');
+    const side = document.getElementById('sidePanel');
+    const overlayEl = document.getElementById('sideOverlay');
+    const tName = document.getElementById('tName');
+    const tId = document.getElementById('tId');
+    const tRating = document.getElementById('tRating');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const homeBtn = document.getElementById('homeBtn');
+    const loginBtn = document.getElementById('loginBtn');
+
+    function openSide() { side.classList.add('open'); overlayEl.classList.add('show'); }
+    function closeSide() { side.classList.remove('open'); overlayEl.classList.remove('show'); }
+
+    function fillTech() {
+      tName.textContent = localStorage.getItem('technician_name') || 'Not set';
+      tId.textContent = localStorage.getItem('technician_id') || 'Not set';
+      tRating.textContent = localStorage.getItem('technician_rating') || 'Not set';
+    }
+
+    btn.addEventListener('click', () => { fillTech(); openSide(); });
+    overlayEl.addEventListener('click', closeSide);
+
+    homeBtn.addEventListener('click', () => { closeSide(); window.location.href = '{{ url_for('home') }}'; });
+    loginBtn.addEventListener('click', () => { closeSide(); window.location.href = '{{ url_for('user_login') }}'; });
+
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('technician_name');
+      localStorage.removeItem('technician_id');
+      localStorage.removeItem('technician_rating');
+      localStorage.removeItem('missing_done');
+      localStorage.removeItem('burnt_done');
+      localStorage.removeItem('voltage_done');
+      closeSide();
+      window.location.href = '{{ url_for('user_login') }}';
+    });
+
+    function updateGenerateState() {
+      const allFlagsTrue =
+        localStorage.getItem('missing_done') === 'true' &&
+        localStorage.getItem('burnt_done') === 'true' &&
+        localStorage.getItem('voltage_done') === 'true';
+
+      const allChecked =
+        document.getElementById('trackDamage').checked &&
+        document.getElementById('burntComponent').checked &&
+        document.getElementById('voltageAnalysis').checked;
+
+      document.getElementById('generateBtn').disabled = !(allFlagsTrue && allChecked);
+    }
+  </script>
+
+</body>
+
+</html>

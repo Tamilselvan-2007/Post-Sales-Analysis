@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login | PCB Defect Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <img src="{{ url_for('static', filename='images/login.gif') }}" alt="Background" class="bg-video">
+    <div class="login-box">
+        <h1 style="font-size: 30px;">ADMIN LOGIN</h1>
+        <form id="loginForm" method="POST" action="{{ url_for('login') }}">
+            <input type="hidden" name="user_type" value="admin">
+            <input type="text" name="Admin_id" placeholder="Admin ID" required><br>
+            <input type="password" name="password" placeholder="Password" required><br>
+            <button class="check-btn" type="submit">Login</button>
+            {% if request.args.get('error') == 'invalid' %}
+            <div class="error" id="errorMsg" style="display:block;">Invalid credentials</div>
+            {% endif %}
+        </form>
+    </div>
+    <script>
+        // Clear previous session flags on load
+        window.onload = function () {
+            localStorage.removeItem('missing_done');
+            localStorage.removeItem('burnt_done');
+            localStorage.removeItem('voltage_done');
+        };
+
+        // Store user info in localStorage after successful login (handled by Flask redirect)
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            const id = this.elements['Admin_id'].value.trim();
+            if (id) {
+                try {
+                    localStorage.setItem('technician_id', id);
+                    localStorage.setItem('technician_name', 'Admin');
+                    localStorage.setItem('technician_rating', '5/5');
+                } catch (e) { }
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Mode | PCB Defect Detection</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+  <img src="{{ url_for('static', filename='images/Mode_Gif.gif') }}" alt="Background" class="bg-video">
+  <button class="hamburger" id="menuBtn"><span></span><span></span><span></span></button>
+  <div class="menu-panel" id="menuPanel">
+    <a href="#home" data-close>Home</a>
+    <a href="#about" data-close>About</a>
+    <a href="#contact" data-close>Contact</a>
+  </div>
+
+  <section class="post-sales-heading" id="home">
+    <h2>Post Sales Service</h2>
+  </section>
+
+
+  <div class="mode-box">
+    <h1>Mode</h1>
+    <div class="btn-container">
+      <button class="btn" onclick="window.location.href='{{ url_for('user_login') }}'">User</button>
+      <button class="btn" onclick="window.location.href='{{ url_for('admin_login') }}'">Edit</button>
+    </div>
+  </div>
+
+
+  <section class="section" id="intro">
+    <h3 style="color:whitesmoke;">PCB DIAGNOSTIC SYSTEM</h3>
+    <strong style="font-size: 24px; display: block; text-align: center;">"Discover intelligent diagnostics, precision
+      analysis,and faster board validation."</strong>
+  </section>
+
+  <section class="section" id="about">
+    <h3>About</h3>
+    <p>We innovate to bring intelligence, accuracy, and efficiency into PCB diagnostics. By integrating AI-powered
+      visual inspection with real-time voltage monitoring, our system simplifies complex testing and enhances
+      reliability. Our technology empowers engineers, speeds up troubleshooting, and helps ensure the highest quality in
+      electronic designs.</p>
+  </section>
+
+
+
+  <section class="section" id="contact">
+    <h3>Contact</h3>
+    <p>Gmail : mohanrajan173@gmail.com
+      Phone No : 9566225928</p>
+    <p>Gmail : thejeshwaran@gmail.com
+      Phone No : 9014721979</p>
+    <p>Gmail : thamizhselvan337@gmail.com
+      Phone No : 8925786345</p>
+    <p>Gmail : jayanthisreeja07@gmail.com
+      Phone No : 8148241471</p>
+    <p>Gmail : lakshmipriyaasubramani@gmail.com
+      Phone No : 6374174398</p>
+  </section>
+
+  <script>
+    (function () {
+      const btn = document.getElementById('menuBtn');
+      const panel = document.getElementById('menuPanel');
+      function toggle() { panel.classList.toggle('show'); }
+      function close() { panel.classList.remove('show'); }
+      btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+      document.addEventListener('click', (e) => {
+        if (!panel.contains(e.target) && e.target !== btn) close();
+      });
+      panel.querySelectorAll('a[data-close]').forEach(a => {
+        a.addEventListener('click', () => { close(); });
+      });
+    })();
+  </script>
+
+</body>
+
+</html>

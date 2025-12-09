@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {% set current_type = page_type or 'missing' %}
+  {% set titles = {
+  'missing': 'Missing Components Analysis',
+  'burnt': 'Burnt Components Analysis',
+  'voltage': 'Voltage Analysis'
+  } %}
+  {% set selection_copy = {
+  'missing': 'Provide an image of the board so we can check for missing components.',
+  'burnt': 'Provide an image of the board so we can detect burnt components.',
+  'voltage': 'Provide an image with probe placement for voltage analysis.'
+  } %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ titles[current_type] }}</title>
+  <style>
+    :root {
+      --bg1: #004d1b83;
+      /* PCB green */
+      --bg2: #107a00;
+      /* lighter green */
+      --button: #c0c0c0;
+      /* silver */
+      --text: #000000f9;
+      /* black */
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      font-family: "Inter", "Segoe UI", sans-serif;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 24px 16px 40px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 20px;
+      margin-bottom: 30px;
+      font-size: 56px;
+      font-weight: 700;
+      font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+      background: linear-gradient(90deg, #ffffff, #e6ffe6);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .primary-btn {
+      background: var(--button);
+      color: var(--text);
+      border: none;
+      padding: 14px 36px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.3s;
+      min-width: 180px;
+    }
+
+    .primary-btn:hover {
+      background: #d9d9d9;
+      transform: scale(1.05);
+    }
+
+    .primary-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .selection-section {
+      width: 100%;
+      max-width: 520px;
+      background: #808080;
+      border-radius: 16px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .selection-section p {
+      color: #fff;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .selection-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 100%;
+    }
+
+    @media(min-width: 520px) {
+      .selection-buttons {
+        flex-direction: row;
+        justify-content: center;
+      }
+    }
+
+    .camera-section,
+    .upload-section,
+    .result-section {
+      width: 100%;
+      max-width: 720px;
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .visual-frame {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.65);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    video,
+    canvas,
+    #resultImage {
+      width: 100%;
+      max-height: 440px;
+      border-radius: 12px;
+      background: #000;
+      object-fit: contain;
+    }
+
+    .button-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .status {
+      color: #ffffff;
+      font-size: 14px;
+      min-height: 20px;
+      text-align: center;
+    }
+
+    .upload-section {
+      background: #808080 !important;
+    }
+
+    .upload-section input[type="file"] {
+      border-radius: 10px;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      border: none;
+      color: var(--text);
+    }
+
+    .result-section h2 {
+      margin: 0;
+      color: #fff;
+    }
+
+    .result-image {
+      width: 100%;
+      border-radius: 12px;
+      background: #000;
+      object-fit: contain;
+      max-height: 480px;
+    }
+
+    .detection-list {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 14px;
+      padding: 16px 20px;
+      color: #ffffff;
+      /* --- ADD THESE LINES --- */
+      max-height: 250px;
+      /* Limits the height of the list */
+      overflow-y: auto;
+      /* Adds a scrollbar inside the list */
+      /* ----------------------- */
+    }
+
+    /* Custom Scrollbar Styling */
+    .detection-list::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .detection-list::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    .detection-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 4px;
+    }
+
+    .detection-list::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .detection-item {
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+
+    .detection-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .detection-item span {
+      font-weight: 600;
+    }
+
+    .result-actions {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .bg {
+      background: url("{{ url_for('static', filename='images/image.jpg') }}") center/cover no-repeat;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+
+<body class="bg">
+  <h1>{{ titles[current_type] }}</h1>
+
+  <div id="selectionSection" class="selection-section">
+    <p>{{ selection_copy[current_type] }}</p>
+    <div class="selection-buttons">
+      <button class="primary-btn" id="chooseCaptureBtn">Capture</button>
+      <button class="primary-btn" id="chooseUploadBtn">Upload</button>
+    </div>
+  </div>
+
+  <div id="cameraSection" class="camera-section hidden">
+    <div class="visual-frame">
+      <video id="preview" autoplay playsinline></video>
+      <canvas id="snapshot" class="hidden"></canvas>
+    </div>
+
+    <div class="button-bar">
+      <button class="primary-btn" id="cameraCaptureBtn">Capture</button>
+      <button class="primary-btn hidden" id="cameraRetakeBtn">Retake</button>
+    </div>
+
+    <div class="button-bar">
+      <button class="primary-btn" id="cameraAnalyzeBtn" disabled>Analyse</button>
+    </div>
+
+    <div class="status" id="cameraStatus"></div>
+  </div>
+
+  <div id="uploadSection" class="upload-section hidden">
+    <strong>Upload an Image</strong>
+    <p>Pick an existing board photo to analyze.</p>
+    <input type="file" id="uploadInput" accept="image/*">
+    <div class="button-bar">
+      <button class="primary-btn" id="uploadAnalyzeBtn" disabled>Analyse</button>
+    </div>
+    <div class="status" id="uploadStatus"></div>
+  </div>
+
+  <div id="resultSection" class="result-section hidden">
+    <h2>Analysis Result</h2>
+    <img id="resultImage" class="result-image" alt="Analysis result" />
+    <div class="detection-list">
+      <strong>Detections</strong>
+      <div id="detectionResults"></div>
+    </div>
+    <div class="result-actions">
+      <button class="primary-btn" id="okBtn">OK</button>
+    </div>
+  </div>
+
+  <script>
+    const currentCheckType = "{{ page_type }}";
+    // Set detection endpoint based on check type
+    const detectionEndpointMap = {
+      'missing': '/detect/missing',
+      'burnt': '/detect/burnt',
+      'voltage': '/detect/voltage'
+    };
+    const detectionEndpoint = detectionEndpointMap[currentCheckType] || '/detect/missing';
+    const dashboardUrl = "{{ url_for('dashboard') }}";
+
+    const selectionSection = document.getElementById('selectionSection');
+    const cameraSection = document.getElementById('cameraSection');
+    const uploadSection = document.getElementById('uploadSection');
+    const resultSection = document.getElementById('resultSection');
+
+    const chooseCaptureBtn = document.getElementById('chooseCaptureBtn');
+    const chooseUploadBtn = document.getElementById('chooseUploadBtn');
+
+    const preview = document.getElementById('preview');
+    const snapshot = document.getElementById('snapshot');
+    const cameraCaptureBtn = document.getElementById('cameraCaptureBtn');
+    const cameraRetakeBtn = document.getElementById('cameraRetakeBtn');
+    const cameraAnalyzeBtn = document.getElementById('cameraAnalyzeBtn');
+    const cameraStatus = document.getElementById('cameraStatus');
+
+    const uploadInput = document.getElementById('uploadInput');
+    const uploadAnalyzeBtn = document.getElementById('uploadAnalyzeBtn');
+    const uploadStatus = document.getElementById('uploadStatus');
+
+    const resultImage = document.getElementById('resultImage');
+    const detectionResults = document.getElementById('detectionResults');
+    const okBtn = document.getElementById('okBtn');
+
+    const emptyResultsText = 'No issues detected.';
+
+    let stream = null;
+    let hasCapturedFrame = false;
+    let selectedUploadFile = null;
+
+    function show(el) { el.classList.remove('hidden'); }
+    function hide(el) { el.classList.add('hidden'); }
+
+    function resetToSelection() {
+      show(selectionSection);
+      hide(cameraSection);
+      hide(uploadSection);
+      hide(resultSection);
+      cameraStatus.textContent = '';
+      uploadStatus.textContent = '';
+      uploadInput.value = '';
+      uploadAnalyzeBtn.disabled = true;
+      cameraAnalyzeBtn.disabled = true;
+      cameraRetakeBtn.classList.add('hidden');
+      hasCapturedFrame = false;
+      selectedUploadFile = null;
+      stopCamera();
+      show(preview);
+      hide(snapshot);
+    }
+
+    function renderDetections(detections) {
+      if (Array.isArray(detections) && detections.length) {
+        detectionResults.innerHTML = detections
+          .map((det, idx) => {
+            const conf = det.confidence !== undefined ? (det.confidence * 100).toFixed(1) + '%' : 'N/A';
+            const label = det.label || `Target ${idx + 1}`;
+            return `<div class="detection-item"><span>${label}</span> — Confidence: ${conf}</div>`;
+          })
+          .join('');
+      } else {
+        detectionResults.innerHTML = `<div class="detection-item">${emptyResultsText}</div>`;
+      }
+    }
+
+    async function startCamera() {
+      cameraStatus.textContent = 'Initializing camera...';
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+          audio: false
+        });
+        preview.srcObject = stream;
+        await preview.play();
+        cameraStatus.textContent = 'Camera ready. Capture when ready.';
+      } catch (error) {
+        cameraStatus.textContent = 'Unable to access the camera. Please check permissions.';
+        resetToSelection();
+      }
+    }
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+    }
+
+    function enterCaptureFlow() {
+      hide(selectionSection);
+      hide(uploadSection);
+      hide(resultSection);
+      show(cameraSection);
+      cameraAnalyzeBtn.disabled = true;
+      cameraRetakeBtn.classList.add('hidden');
+      hasCapturedFrame = false;
+      show(preview);
+      hide(snapshot);
+      startCamera();
+    }
+
+    function enterUploadFlow() {
+      hide(selectionSection);
+      hide(cameraSection);
+      hide(resultSection);
+      show(uploadSection);
+      uploadAnalyzeBtn.disabled = true;
+      uploadStatus.textContent = 'Select an image to continue.';
+      stopCamera();
+    }
+
+    function captureFrame() {
+      if (!stream) {
+        cameraStatus.textContent = 'Camera is not active.';
+        return;
+      }
+
+      const width = preview.videoWidth || 640;
+      const height = preview.videoHeight || 480;
+      snapshot.width = width;
+      snapshot.height = height;
+      snapshot.getContext('2d').drawImage(preview, 0, 0, width, height);
+
+      hide(preview);
+      show(snapshot);
+      cameraRetakeBtn.classList.remove('hidden');
+      cameraAnalyzeBtn.disabled = false;
+      hasCapturedFrame = true;
+      cameraStatus.textContent = 'Frame captured. Click Analyse to continue.';
+    }
+
+    function retakeFrame() {
+      if (stream) {
+        show(preview);
+        hide(snapshot);
+        hasCapturedFrame = false;
+        cameraAnalyzeBtn.disabled = true;
+        cameraRetakeBtn.classList.add('hidden');
+        cameraStatus.textContent = 'Camera ready. Capture when ready.';
+      }
+    }
+
+    async function analyzeCapturedFrame() {
+      if (!hasCapturedFrame) {
+        throw new Error('Please capture a frame first.');
+      }
+
+      const dataUrl = snapshot.toDataURL('image/jpeg', 0.92);
+      const response = await fetch(detectionEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_base64: dataUrl })
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.error?.message || 'Analysis failed.');
+      }
+
+      return data;
+    }
+
+    // --- NEW: Client-side file reading to base64 ---
+    function readFileAsBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(new Error("Failed to read file"));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function analyzeUploadedFile(base64String) {
+      // Send base64 directly to detection endpoint
+      const detectResponse = await fetch(detectionEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_base64: base64String })
+      });
+
+      const data = await detectResponse.json();
+      if (!detectResponse.ok || !data.success) {
+        throw new Error(data.error?.message || 'Analysis failed.');
+      }
+
+      return data;
+    }
+
+    function showResult(data) {
+      stopCamera();
+      hide(cameraSection);
+      hide(uploadSection);
+      show(resultSection);
+      // Ensure prefix if missing (though backend usually returns raw base64 or with prefix)
+      // If backend returns raw base64, we need to add prefix.
+      // If backend returns data URI, we use it as is.
+      let imgSrc = data.image_base64;
+      if (!imgSrc.startsWith('data:image')) {
+        imgSrc = 'data:image/jpeg;base64,' + imgSrc;
+      }
+      resultImage.src = imgSrc;
+      renderDetections(data.detections);
+    }
+
+    async function handleCameraAnalyze() {
+      cameraAnalyzeBtn.disabled = true;
+      cameraStatus.textContent = 'Analyzing...';
+      try {
+        const data = await analyzeCapturedFrame();
+        cameraStatus.textContent = 'Analysis complete.';
+        showResult(data);
+      } catch (error) {
+        cameraStatus.textContent = error.message || 'An unexpected error occurred.';
+        cameraAnalyzeBtn.disabled = false;
+      }
+    }
+
+    async function handleUploadAnalyze() {
+      if (!selectedUploadFile) {
+        uploadStatus.textContent = 'Please select a file.';
+        return;
+      }
+
+      uploadAnalyzeBtn.disabled = true;
+      uploadStatus.textContent = 'Processing image...';
+
+      try {
+        // Convert to base64 in browser
+        const base64String = await readFileAsBase64(selectedUploadFile);
+
+        uploadStatus.textContent = 'Analyzing image...';
+        const data = await analyzeUploadedFile(base64String);
+
+        uploadStatus.textContent = 'Analysis complete.';
+        showResult(data);
+      } catch (error) {
+        uploadStatus.textContent = error.message || 'An unexpected error occurred.';
+        uploadAnalyzeBtn.disabled = false;
+      }
+    }
+
+    function handleUploadChange() {
+      const file = uploadInput.files && uploadInput.files[0];
+      if (!file) {
+        selectedUploadFile = null;
+        uploadAnalyzeBtn.disabled = true;
+        uploadStatus.textContent = 'Select an image to continue.';
+        return;
+      }
+
+      selectedUploadFile = file;
+      uploadAnalyzeBtn.disabled = false;
+      uploadStatus.textContent = `Selected file: ${file.name}`;
+    }
+
+    okBtn.addEventListener('click', () => {
+      // Set the appropriate localStorage flag based on check_type
+      if (currentCheckType === 'missing') {
+        try {
+          localStorage.setItem('missing_done', 'true');
+        } catch (e) { }
+      } else if (currentCheckType === 'burnt') {
+        try {
+          localStorage.setItem('burnt_done', 'true');
+        } catch (e) { }
+      } else if (currentCheckType === 'voltage') {
+        try {
+          localStorage.setItem('voltage_done', 'true');
+        } catch (e) { }
+      }
+      // Redirect to dashboard
+      window.location.href = dashboardUrl;
+    });
+
+    chooseCaptureBtn.addEventListener('click', enterCaptureFlow);
+    chooseUploadBtn.addEventListener('click', enterUploadFlow);
+    cameraCaptureBtn.addEventListener('click', captureFrame);
+    cameraRetakeBtn.addEventListener('click', retakeFrame);
+    cameraAnalyzeBtn.addEventListener('click', handleCameraAnalyze);
+    uploadInput.addEventListener('change', handleUploadChange);
+    uploadAnalyzeBtn.addEventListener('click', handleUploadAnalyze);
+
+    window.addEventListener('beforeunload', stopCamera);
+    resetToSelection();
+  </script>
+</body>
+
+</html>

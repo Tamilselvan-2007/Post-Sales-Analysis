@@ -1,0 +1,317 @@
+<!-- fifth_page.html (updated) -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voltage Analysis</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .table-card {
+      font-size: 18px;
+    }
+
+    .table-header {
+      font-size: 19px;
+    }
+
+    .simple-note {
+      font-size: 1.4rem;
+      line-height: 1.6;
+      font-weight: bold;
+      color: #000;
+      text-align: left;
+      padding: 10px;
+    }
+
+    .recheck-btn {
+      background-color: #ff9800;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 14px;
+      margin-left: 10px;
+      display: none;
+    }
+
+    .recheck-btn:hover {
+      background-color: #e68900;
+    }
+
+    /* New Layout Styles - Full Screen Expansion */
+    .main-layout {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      padding: 10px 20px 20px 20px;
+      width: 98%;
+      height: calc(100vh - 80px);
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+
+    .left-col,
+    .right-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Left Column Specifics */
+    .image-bar {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      margin-bottom: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+    }
+
+    #preview {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      width: auto;
+      height: auto;
+    }
+
+    .notes {
+      flex-shrink: 0;
+    }
+
+    /* Right Column Specifics */
+    .table-card {
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      margin-bottom: 0;
+      padding-bottom: 10px;
+    }
+
+    .table-scroll {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      max-height: none !important;
+      /* Override style.css constraint */
+    }
+
+    .table-footer {
+      flex-shrink: 0;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding-top: 5px;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+
+<body>
+  <video class="bg-video" src="{{ url_for('static', filename='video/voltage_gif_4..webm') }}" autoplay muted loop
+    playsinline></video>
+  <h1 class="page-title" style="margin: 10px 0; height: 50px; line-height: 50px;">Voltage Analysis</h1>
+
+  <div class="main-layout">
+    <!-- Left Column: Image and Notes -->
+    <div class="left-col">
+      <div class="image-bar">
+        <img id="preview" src="{{ url_for('static', filename='images/pcb_points.jpeg') }}" alt="Selected Image" />
+      </div>
+
+      <div class="notes">
+        <h2>Note:</h2>
+        <div class="simple-note">
+          <div>(i) Place Black Probes on Ground (Reference)</div>
+          <div>(ii) Place Red Probe on Test Points</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Table and OK Button -->
+    <div class="right-col">
+      <div class="table-card">
+        <div class="table-header">
+          <div>Point</div>
+          <div>Expected (V)</div>
+          <div>Measured (V)</div>
+          <div>Status</div>
+        </div>
+        <div class="table-scroll" id="tableBody"></div>
+
+        <!-- Moved OK Button Inside Table Card -->
+        <div class="table-footer">
+          <button class="check-btn" id="okBtn">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const preview = document.getElementById('preview');
+    const tableBody = document.getElementById('tableBody');
+    const okBtn = document.getElementById('okBtn');
+
+    function makeRow(idx, point, expected, measured, statusText, statusClass) {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.id = 'row-' + point;
+      const btnDisplay = statusText === 'NOT OK' ? 'inline-block' : 'none';
+      row.innerHTML = `
+      <div>${point}</div>
+      <div>${expected}</div>
+      <div class="measured-val">${measured}</div>
+      <div class="${statusClass} status-cell">${statusText}</div>
+      <button class="recheck-btn" onclick="triggerRecheck('${point}')" style="display: ${btnDisplay}">Recheck</button>
+    `;
+      row.setAttribute('data-idx', idx);
+      return row;
+    }
+
+    const DATA = [
+      ["A1", "0.0", "--", "--"], ["A2", "0.0", "--", "--"], ["A3", "0.0", "--", "--"],
+      ["A4", "0.0", "--", "--"], ["A5", "0.0", "--", "--"], ["A6", "0.0", "--", "--"],
+      ["A7", "0.0", "--", "--"], ["A8", "0.0", "--", "--"], ["A9", "0.0", "--", "--"],
+      ["B1", "3.3", "--", "--"], ["B2", "3.3", "--", "--"], ["B3", "3.3", "--", "--"],
+      ["B4", "3.3", "--", "--"], ["B5", "3.3", "--", "--"], ["B6", "3.3", "--", "--"],
+      ["B7", "3.3", "--", "--"], ["B8", "3.3", "--", "--"], ["B9", "3.3", "--", "--"],
+      ["C1", "0.0", "--", "--"], ["C2", "0.0", "--", "--"],
+      ["D1", "3.3", "--", "--"], ["D2", "3.3", "--", "--"], ["D3", "3.3", "--", "--"],
+      ["E1", "2.0", "--", "--"], ["E2", "2.0", "--", "--"],
+      ["F1", "2.0", "--", "--"], ["F2", "2.0", "--", "--"], ["F3", "2.0", "--", "--"],
+      ["F4", "2.0", "--", "--"], ["F5", "2.0", "--", "--"],
+      ["G1", "3.3", "--", "--"], ["G2", "3.3", "--", "--"], ["G3", "3.3", "--", "--"],
+      ["G4", "3.3", "--", "--"], ["G5", "3.3", "--", "--"], ["G6", "3.3", "--", "--"],
+      ["H1", "2.0", "--", "--"], ["H2", "2.0", "--", "--"],
+      ["I1", "0.0", "--", "--"], ["I2", "0.0", "--", "--"],
+      ["J1", "0.0", "--", "--"], ["J2", "0.0", "--", "--"],
+      ["K1", "0.0", "--", "--"], ["K2", "0.0", "--", "--"],
+      ["L1", "3.3", "--", "--"], ["L2", "3.3", "--", "--"], ["L3", "3.3", "--", "--"],
+      ["M1", "3.3", "--", "--"], ["M2", "3.3", "--", "--"], ["M3", "3.3", "--", "--"],
+      ["N1", "3.3", "--", "--"], ["N2", "3.3", "--", "--"], ["N3", "3.3", "--", "--"],
+      ["O1", "0.9", "--", "--"], ["O2", "0.9", "--", "--"],
+      ["P1", "3.3", "--", "--"], ["P2", "3.3", "--", "--"],
+      ["Q1", "0.0", "--", "--"], ["Q2", "0.0", "--", "--"],
+      ["R1", "3.3", "--", "--"], ["R2", "3.3", "--", "--"],
+      ["S1", "3.3", "--", "--"], ["S2", "3.3", "--", "--"],
+      ["T1", "0.0", "--", "--"], ["T2", "0.0", "--", "--"],
+      ["U1", "3.3", "--", "--"], ["U2", "3.3", "--", "--"], ["U3", "3.3", "--", "--"],
+      ["V1", "3.3", "--", "--"], ["V2", "3.3", "--", "--"],
+      ["W1", "3.3", "--", "--"], ["W2", "3.3", "--", "--"],
+      ["X1", "3.3", "--", "--"], ["X2", "3.3", "--", "--"],
+      ["Y1", "3.3", "--", "--"], ["Y2", "3.3", "--", "--"],
+      ["Z1", "0.25", "--", "--"], ["Z2", "0.25", "--", "--"],
+      ["RF", "3.3", "--", "--"]
+    ];
+
+    (function renderTable() {
+      tableBody.innerHTML = '';
+      DATA.forEach((r, i) => {
+        const statusText = r[3];
+        const statusClass = statusText === 'OK' ? 'status-ok' : 'status-not';
+        const row = makeRow(i, r[0], r[1], r[2], statusText, statusClass);
+        tableBody.appendChild(row);
+      });
+    })();
+
+    okBtn.addEventListener('click', () => {
+      try { localStorage.setItem('voltage_done', 'true'); } catch (e) { }
+      window.location.href = "{{ url_for('diagnosis_complete') }}";
+    });
+
+    // Reset sequence on page load: tell backend to reset the ESP sequence
+    window.addEventListener('load', () => {
+      fetch('/detect/reset_sequence', { method: 'POST' })
+        .then(() => console.log('Reset sequence requested'))
+        .catch(err => console.warn('Reset request failed', err));
+    });
+
+    // ---------------------------------------------------------
+    // SOCKET.IO LOGIC
+    // ---------------------------------------------------------
+    const socket = io();
+
+    socket.on('connect', () => {
+      console.log('Connected to Socket.IO server');
+    });
+
+    socket.on('voltage_update', (data) => {
+      // data: { point: "A1", value: 3.28, status: "OK", expected: 0.0 }
+      console.log('Update received:', data);
+      updateRow(data);
+    });
+
+    function updateRow(data) {
+      const row = document.getElementById('row-' + data.point);
+      if (!row) return;
+
+      // Update Measured Value
+      const measuredDiv = row.querySelector('.measured-val');
+      if (measuredDiv) measuredDiv.textContent = (data.value === undefined || data.value === null) ? "--" : data.value;
+
+      // Update Status
+      const statusDiv = row.querySelector('.status-cell');
+      if (statusDiv) {
+        statusDiv.textContent = data.status;
+        statusDiv.className = 'status-cell ' + (data.status === 'OK' ? 'status-ok' : 'status-not');
+      }
+
+      // Show/Hide Recheck Button
+      const btn = row.querySelector('.recheck-btn');
+      if (btn) {
+        if (data.status === 'NOT OK') {
+          btn.style.display = 'inline-block';
+        } else {
+          btn.style.display = 'none';
+        }
+      }
+    }
+
+    function triggerRecheck(point) {
+      console.log('Rechecking point:', point);
+
+      // Reset measured & status values to "--"
+      const row = document.getElementById('row-' + point);
+      if (row) {
+        const measuredDiv = row.querySelector('.measured-val');
+        const statusDiv = row.querySelector('.status-cell');
+        if (measuredDiv) measuredDiv.textContent = "--";
+        if (statusDiv) {
+          statusDiv.textContent = "--";
+          statusDiv.className = "status-cell";
+        }
+      }
+
+      // Send signal to backend (resume_loop)
+      fetch('/detect/resume_loop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ point: point })
+      })
+        .then(res => res.json())
+        .then(data => {
+          console.log('Resume signal sent', data);
+        })
+        .catch(err => console.error('Error sending resume signal:', err));
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Diagnosis Flow</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Trebuchet MS', 'Lucida Sans Unicode',
+                'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+        }
+
+        body {
+            background: #000;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: #fff;
+        }
+
+        .card {
+            position: absolute;
+            width: 420px;
+            padding: 35px;
+            border-radius: 15px;
+            border: 2px solid #00ff66;
+            background: rgba(0, 0, 0, 0.95);
+            box-shadow: 0 0 25px #00ff66;
+            text-align: center;
+            opacity: 0;
+        }
+
+        h2 {
+            color: #fff;
+            font-size: 1.5rem;
+        }
+
+        .icon {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 20px auto;
+            border-radius: 50%;
+            border: 3px solid #00ff66;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+            color: #00ff66;
+            box-shadow: 0 0 15px #00ff66;
+        }
+
+        /* floating effect */
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        /* slide & scale animations – initially PAUSED */
+        .from-left {
+            animation: slideLeft 1s forwards, float 2s infinite 1s;
+            animation-play-state: paused;
+        }
+
+        .from-right {
+            animation: slideRight 1s forwards, float 2s infinite 1s;
+            animation-play-state: paused;
+        }
+
+        .from-center {
+            animation: scaleIn 1s forwards, float 2s infinite 1s;
+            animation-play-state: paused;
+        }
+
+        @keyframes slideLeft {
+            from {
+                transform: translateX(-800px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideRight {
+            from {
+                transform: translateX(800px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* when active, start the animation */
+        .card.active {
+            opacity: 1;
+            animation-play-state: running;
+        }
+
+        /* final card extra glow */
+        .final-card {
+            border: 2px solid #00ff66;
+            box-shadow: 0 0 30px #00ff66;
+        }
+
+        .final-text {
+            margin-top: 10px;
+            font-size: 1rem;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- CARD 1 -->
+    <div class="card from-left" id="card1">
+        <div class="icon">✔</div>
+        <h2>Missing Components Check Finished</h2>
+    </div>
+
+    <!-- CARD 2 -->
+    <div class="card from-right" id="card2">
+        <div class="icon">✔</div>
+        <h2>Burnt Component Check Finished</h2>
+    </div>
+
+    <!-- CARD 3 -->
+    <div class="card from-left" id="card3">
+        <div class="icon">✔</div>
+        <h2>Voltage Analysis Finished</h2>
+    </div>
+
+    <!-- FINAL CARD -->
+    <div class="card final-card from-center" id="finalCard">
+        <div class="icon">✔</div>
+        <h2>Diagnosis Complete</h2>
+        <p class="final-text">Redirecting to dashboard...</p>
+    </div>
+
+    <script>
+  const card1 = document.getElementById("card1");
+  const card2 = document.getElementById("card2");
+  const card3 = document.getElementById("card3");
+  const finalCard = document.getElementById("finalCard");
+
+  // ✅ Faster but readable timing
+  const DISPLAY_TIME = 1000;   // 1.6 sec per card
+  const GAP_TIME = 500;       // 0.5 sec gap
+
+  let t = 1000;
+
+  function show(card) {
+    card.classList.add("active");
+  }
+
+  function hide(card) {
+    card.classList.remove("active");
+    card.style.opacity = "0";
+  }
+
+  // CARD 1
+  setTimeout(() => { show(card1); }, t);
+  t += DISPLAY_TIME;
+  setTimeout(() => { hide(card1); }, t);
+  t += GAP_TIME;
+
+  // CARD 2
+  setTimeout(() => { show(card2); }, t);
+  t += DISPLAY_TIME;
+  setTimeout(() => { hide(card2); }, t);
+  t += GAP_TIME;
+
+  // CARD 3
+  setTimeout(() => { show(card3); }, t);
+  t += DISPLAY_TIME;
+  setTimeout(() => { hide(card3); }, t);
+  t += GAP_TIME;
+
+  // FINAL CARD
+  setTimeout(() => { show(finalCard); }, t);
+  t += 3000; // final card stays 3 sec
+
+  // REDIRECT
+  setTimeout(() => {
+    window.location.href = "{{ url_for('dashboard') }}";
+  }, t);
+  </script>
+
+
+ 
+
+</body>
+
+</html>
