@@ -22,6 +22,7 @@ def create_app() -> Flask:
 
     configure_app(app)
     setup_logging(app)
+    register_error_handlers(app)
 
     # Attach socketio to app
     socketio.init_app(app)
@@ -40,13 +41,30 @@ def create_app() -> Flask:
 def configure_app(app: Flask) -> None:
     app.config["SECRET_KEY"] = "your-secret-key-here"
     app.config["UPLOAD_FOLDER"] = None
-    app.config.setdefault("MAX_CONTENT_LENGTH", 16 * 1024 * 1024)
+    app.config.setdefault("MAX_CONTENT_LENGTH", 32 * 1024 * 1024)
     app.config.setdefault("JSON_SORT_KEYS", False)
 
 
 def setup_logging(app: Flask) -> None:
     logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
     app.logger.setLevel(logging.INFO)
+
+
+def register_error_handlers(app: Flask) -> None:
+    @app.errorhandler(413)
+    def request_entity_too_large(error):
+        return {"success": False, "error": {"message": "File too large. Maximum size is 32MB."}}, 413
+
+    @app.errorhandler(404)
+    def page_not_found(error):
+        if request.path.startswith("/detect/"):
+            return {"success": False, "error": {"message": "Endpoint not found."}}, 404
+        return render_template("first_page.html"), 404
+
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        return {"success": False, "error": {"message": "Internal Server Error"}}, 500
+
 
 
 def register_frontend_routes(app: Flask):
