@@ -14,15 +14,23 @@ burnt_model: Optional[YOLO] = None
 
 
 def _load_model(model_path: Path) -> YOLO:
-    """Load YOLO model with confidence threshold."""
+    """Load YOLO model with confidence threshold, and prepare backend on CPU."""
     model_path = ensure_model_path(model_path)
     model = YOLO(str(model_path))        # EXACT path YOLO accepts
+    # set default confidence and device override
     model.overrides["conf"] = CONFIDENCE_THRESHOLD
-
-    # ✅ Force the model to load on CPU (fixes Render crashes)
-    model.model.to("cpu")
-
+    model.overrides["device"] = "cpu"
+    # ensure backend model is on cpu and in eval mode to avoid re-fusing during request handling
+    try:
+        # ultralytics wrapper exposes .model (nn.Module) for lower-level ops
+        if hasattr(model, "model") and getattr(model, "model") is not None:
+            model.model.to("cpu")
+            model.model.eval()
+    except Exception:
+        # don't fail load if the low-level attributes differ across ultralytics versions
+        pass
     return model
+
 
 
 def load_models() -> None:
