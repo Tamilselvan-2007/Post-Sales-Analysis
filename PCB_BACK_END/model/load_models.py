@@ -18,6 +18,10 @@ def _load_model(model_path: Path) -> YOLO:
     model_path = ensure_model_path(model_path)
     model = YOLO(str(model_path))        # EXACT path YOLO accepts
     model.overrides["conf"] = CONFIDENCE_THRESHOLD
+
+    # ✅ Force the model to load on CPU (fixes Render crashes)
+    model.model.to("cpu")
+
     return model
 
 
