@@ -35,7 +35,9 @@ def run_burnt_detection(image_input: ImageInput) -> List[Dict]:
     if not results:
         return []
 
-    return _format_detections(results[0])
+    detections = _format_detections(results[0])
+    return detections, image_input   # <— return resized image also
+
 
 def _format_detections(result: Results) -> List[Dict]:
     boxes = result.boxes
