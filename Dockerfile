@@ -21,5 +21,5 @@ COPY . /app/
 
 EXPOSE 10000
 
-CMD ["gunicorn", "--worker-class", "eventlet", "-w", "1", "--timeout", "120", "--bind", "0.0.0.0:$PORT", "app:app"]
-
+# ★ Shell form so $PORT expands correctly
+CMD gunicorn --worker-class eventlet -w 1 --timeout 120 --bind 0.0.0.0:$PORT app:app
