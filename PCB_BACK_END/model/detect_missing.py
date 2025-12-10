@@ -11,10 +11,10 @@ ImageInput = Union[str, np.ndarray]
 
 
 def run_missing_detection(image_input: ImageInput) -> List[Dict]:
-    models_registry.load_models()
+    # Models are pre-loaded at startup, just validate they exist
     model = models_registry.missing_model
     if model is None:
-        raise RuntimeError("Missing components model failed to load.")
+        raise RuntimeError("Missing components model not loaded. Please restart the application.")
 
     CONFIDENCE = 0.25  # ✅ Same fixed confidence
 

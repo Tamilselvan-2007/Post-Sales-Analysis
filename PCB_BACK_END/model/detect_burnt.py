@@ -11,10 +11,10 @@ ImageInput = Union[str, np.ndarray]
 
 
 def run_burnt_detection(image_input: ImageInput) -> List[Dict]:
-    models_registry.load_models()
+    # Models are pre-loaded at startup, just validate they exist
     model = models_registry.burnt_model
     if model is None:
-        raise RuntimeError("Burnt components model failed to load.")
+        raise RuntimeError("Burnt components model not loaded. Please restart the application.")
 
     CONFIDENCE = 0.25 # ✅ Fixed industrial-grade confidence
 

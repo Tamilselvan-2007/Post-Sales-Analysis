@@ -2,10 +2,12 @@ import logging
 import os
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_socketio import SocketIO
+from flask_cors import CORS
 
 from routes.upload_routes import upload_bp
 from routes.detect_routes import detect_bp
 from routes.debug_routes import debug_bp
+from model.load_models import load_models
 import traceback
 
 LOG_FORMAT = "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
@@ -25,6 +27,9 @@ def create_app() -> Flask:
     configure_app(app)
     setup_logging(app)
     register_error_handlers(app)
+    
+    # Enable CORS for all routes
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
     # Attach socketio to app
     socketio.init_app(app)
@@ -38,6 +43,16 @@ def create_app() -> Flask:
     app.register_blueprint(debug_bp)
 
     register_frontend_routes(app)
+    
+    # Load ML models at startup for better performance
+    app.logger.info("🔄 Loading ML models at startup...")
+    try:
+        load_models()
+        app.logger.info("✅ ML models loaded successfully!")
+    except Exception as e:
+        app.logger.error(f"❌ Failed to load ML models: {e}")
+        app.logger.warning("⚠️  Application will continue but detection endpoints may fail")
+    
     return app
 
 

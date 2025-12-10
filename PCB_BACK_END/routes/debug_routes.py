@@ -4,6 +4,25 @@ import os
 
 debug_bp = Blueprint('debug', __name__, url_prefix='/debug')
 
+@debug_bp.route('/health')
+def health():
+    """Health check endpoint for deployment monitoring"""
+    try:
+        from model.load_models import missing_model, burnt_model
+        models_ready = (missing_model is not None) and (burnt_model is not None)
+        
+        return jsonify({
+            "status": "healthy" if models_ready else "degraded",
+            "models_loaded": models_ready,
+            "message": "Application is running" if models_ready else "Models not loaded"
+        }), 200 if models_ready else 503
+    except Exception as e:
+        return jsonify({
+            "status": "unhealthy",
+            "models_loaded": False,
+            "error": str(e)
+        }), 503
+
 @debug_bp.route('/status')
 def status():
     status_info = {
