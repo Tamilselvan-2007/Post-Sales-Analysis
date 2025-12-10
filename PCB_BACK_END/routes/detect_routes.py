@@ -78,7 +78,11 @@ def _process_request(handler: Callable[[ImageInput], List[dict]], context: str):
         image_input = _resolve_image_input(payload)
         detections = handler(image_input)
         current_app.logger.info(f"Detections for '{context}': {detections}")
-        image_base64 = annotate_image(image_input, detections)
+        annotated = annotate_image(image_input, detections)
+        return success_response({
+            "image_base64": annotated,
+            "detections": detections
+        })
         return success_response({"image_base64": image_base64, "detections": detections})
     except ValueError as ve:
         current_app.logger.warning("Validation error on %s detection: %s", context, ve)
