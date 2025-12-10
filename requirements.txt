@@ -1,0 +1,11 @@
+Flask>=3.0.0
+ultralytics>=8.0.0
+opencv-python-headless>=4.8.0
+numpy>=1.24.0
+torch==2.2.2+cpu
+torchvision==0.17.2+cpu
+--find-links https://download.pytorch.org/whl/torch_stable.html
+flask-socketio>=5.0.0
+flask-cors>=4.0.0
+gunicorn
+eventlet
