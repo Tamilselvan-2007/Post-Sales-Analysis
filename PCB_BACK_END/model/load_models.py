@@ -19,6 +19,8 @@ def _load_model(model_path: Path) -> YOLO:
     model = YOLO(str(model_path))        # EXACT path YOLO accepts
     # set default confidence and device override
     model.overrides["conf"] = CONFIDENCE_THRESHOLD
+    # Disable fusion (saves 150–300 MB RAM)
+    model.fuse = lambda *args, **kwargs: model
     model.overrides["device"] = "cpu"
     # ensure backend model is on cpu and in eval mode to avoid re-fusing during request handling
     try:
