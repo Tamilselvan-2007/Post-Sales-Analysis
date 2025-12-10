@@ -76,9 +76,10 @@ def _process_request(handler: Callable[[ImageInput], List[dict]], context: str):
         # If it's None (because form-data was used) pass empty dict so _resolve_image_input checks files
         payload = payload or {}
         image_input = _resolve_image_input(payload)
-        detections = handler(image_input)
+        detections, processed_image = handler(image_input)
         current_app.logger.info(f"Detections for '{context}': {detections}")
-        annotated = annotate_image(image_input, detections)
+        annotated = annotate_image(processed_image, detections)
+
         return success_response({
             "image_base64": annotated,
             "detections": detections
