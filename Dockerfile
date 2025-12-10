@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir torch==2.2.2+cpu torchvision==0.17.2+cpu \
 # Install other Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . /app/
+COPY PCB_BACK_END /app/
 
 EXPOSE 10000
 
