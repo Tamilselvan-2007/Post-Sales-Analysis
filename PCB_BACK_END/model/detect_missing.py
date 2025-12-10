@@ -14,8 +14,8 @@ def run_missing_detection(image_input: ImageInput) -> List[Dict]:
     # Resize huge images to prevent OOM
     h, w = image_input.shape[:2]
     if max(h, w) > 1500:
-    scale = 1500 / max(h, w)
-    image_input = cv2.resize(image_input, (int(w*scale), int(h*scale)))
+        scale = 1500 / max(h, w)
+        image_input = cv2.resize(image_input, (int(w*scale), int(h*scale)))
 
     # Models are pre-loaded at startup, just validate they exist
     model = models_registry.missing_model
