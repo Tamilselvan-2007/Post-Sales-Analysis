@@ -18,4 +18,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 10000
 
 # Start server
-CMD ["gunicorn", "-k", "eventlet", "-w", "1", "--bind", "0.0.0.0:10000", "app:app"]
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "app:app"]
+
