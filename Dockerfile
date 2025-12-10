@@ -1,25 +1,22 @@
 FROM python:3.10-slim
 
-# Install system dependencies for OpenCV, numpy, YOLO
+# Install required system packages
 RUN apt-get update && apt-get install -y \
-    libgl1 \
+    libgl1-mesa-glx \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-COPY requirements.txt /app/
-
-# Install PyTorch CPU
-RUN pip install --no-cache-dir torch==2.2.2+cpu torchvision==0.17.2+cpu \
-    -f https://download.pytorch.org/whl/torch_stable.html
-
-# Install other Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
+# Copy ONLY the backend folder
 COPY PCB_BACK_END /app/
 
+# Install Python dependencies
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Expose Render $PORT
 EXPOSE 10000
 
-# ★ Shell form so $PORT expands correctly
-CMD gunicorn --worker-class eventlet -w 1 --timeout 120 --bind 0.0.0.0:$PORT app:app
+# Start Gunicorn (pointing to PCB_BACK_END/app.py)
+CMD ["gunicorn", "-k", "eventlet", "-w", "1", "--bind", "0.0.0.0:10000", "app:app"]
