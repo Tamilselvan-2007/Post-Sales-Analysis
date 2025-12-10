@@ -17,18 +17,41 @@ detect_bp = Blueprint("detect", __name__, url_prefix="/detect")
 ImageInput = np.ndarray
 
 
+# replace existing _resolve_image_input + _decode_base64_image + _process_request
 def _resolve_image_input(payload: dict) -> ImageInput:
-    image_base64 = payload.get("image_base64")
+    """
+    Support two input styles:
+      1) JSON body with "image_base64": "data:image/..;base64,AAAA..."
+      2) multipart/form-data with file field "image" (FileStorage)
+    """
+    # 1) If JSON payload contained base64 string
+    image_base64 = payload.get("image_base64") if payload is not None else None
     if image_base64:
         return _decode_base64_image(image_base64)
 
-    raise ValueError("Request JSON must include 'image_base64'.")
+    # 2) If request had a file upload (multipart/form-data)
+    if "image" in request.files:
+        file = request.files["image"]
+        file_bytes = file.read()
+        array = np.frombuffer(file_bytes, dtype=np.uint8)
+        image = cv2.imdecode(array, cv2.IMREAD_COLOR)
+        if image is None:
+            raise ValueError("Uploaded file could not be decoded as an image.")
+        return image
+
+    # 3) If client sent raw bytes (rare)
+    if request.data:
+        array = np.frombuffer(request.data, dtype=np.uint8)
+        image = cv2.imdecode(array, cv2.IMREAD_COLOR)
+        if image is not None:
+            return image
+
+    raise ValueError("Request must include image file (form field 'image') or JSON 'image_base64'.")
 
 
 def _decode_base64_image(image_base64: str) -> np.ndarray:
     if "," in image_base64:
         image_base64 = image_base64.split(",", 1)[1]
-
     try:
         image_bytes = base64.b64decode(image_base64)
     except (base64.binascii.Error, ValueError) as exc:  # type: ignore[attr-defined]
@@ -38,22 +61,32 @@ def _decode_base64_image(image_base64: str) -> np.ndarray:
     image = cv2.imdecode(array, cv2.IMREAD_COLOR)
     if image is None:
         raise ValueError("Could not decode base64 image data.")
-
     return image
 
 
 def _process_request(handler: Callable[[ImageInput], List[dict]], context: str):
+    """
+    Robust request processor:
+     - Accepts JSON base64 or file uploads
+     - Returns JSON (success_response/error_response)
+    """
     try:
-        payload = request.get_json(silent=True) or {}
+        # try to parse JSON body first (if any)
+        payload = request.get_json(silent=True)
+        # If it's None (because form-data was used) pass empty dict so _resolve_image_input checks files
+        payload = payload or {}
         image_input = _resolve_image_input(payload)
         detections = handler(image_input)
         current_app.logger.info(f"Detections for '{context}': {detections}")
         image_base64 = annotate_image(image_input, detections)
         return success_response({"image_base64": image_base64, "detections": detections})
+    except ValueError as ve:
+        current_app.logger.warning("Validation error on %s detection: %s", context, ve)
+        return error_response(str(ve), status_code=400)
     except Exception as exc:  # pylint: disable=broad-except
         current_app.logger.exception("Failed to process %s detection: %s", context, exc)
-        return error_response(str(exc), status_code=400)
-
+        # generic 500 here so frontend won't get HTML page — we return JSON with the message
+        return error_response("Internal server error during detection. See server logs.", status_code=500)
 
 @detect_bp.route("/missing", methods=["POST"])
 def detect_missing():
