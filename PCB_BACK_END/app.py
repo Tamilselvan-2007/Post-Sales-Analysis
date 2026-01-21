@@ -91,14 +91,6 @@ def register_frontend_routes(app: Flask):
     def home():
         return render_template("first_page.html")
 
-    @app.route("/user_login")
-    def user_login():
-        return render_template("login_page.html")
-
-    @app.route("/admin_login")
-    def admin_login():
-        return render_template("login_admin.html")
-
     @app.route("/admin_training_area")
     def admin_training_area():
         return render_template("admin_use_page.html")
@@ -106,27 +98,6 @@ def register_frontend_routes(app: Flask):
     @app.route("/dashboard")
     def dashboard():
         return render_template("second_page.html")
-
-    @app.route("/login", methods=["POST"])
-    def login():
-        user_type = request.form.get("user_type", "user")
-        if user_type == "admin":
-            user_id = request.form.get("Admin_id", "").strip()
-        else:
-            user_id = request.form.get("technician_id", "").strip()
-        password = request.form.get("password", "")
-
-        if user_type == "user" and user_id == "technician_1" and password == "tech@1":
-            session["user_id"] = user_id
-            return redirect(url_for("dashboard"))
-
-        if user_type == "admin" and user_id == "admin_1" and password == "admin@1":
-            session["user_id"] = user_id
-            return redirect(url_for("admin_training_area"))
-
-        if user_type == "admin":
-            return redirect(url_for("admin_login") + "?error=invalid")
-        return redirect(url_for("user_login") + "?error=invalid")
 
     @app.route("/missing", methods=['GET', 'POST'])
     def missing_page():
