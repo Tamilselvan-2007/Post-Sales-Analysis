@@ -70,8 +70,8 @@
       <div id="tRating">-</div>
     </div>
 
-    <button class="logout-btn" id="homeBtn"><img class="btn-icon" src="{{ url_for('static', filename='icon_home.png') }}"
-        alt="">Logout</button>
+    <button class="logout-btn" id="homeBtn"><img class="btn-icon"
+        src="{{ url_for('static', filename='icon_home.png') }}" alt="">Logout</button>
 
   </aside>
 
@@ -139,7 +139,7 @@
     overlayEl.addEventListener('click', closeSide);
 
     homeBtn.addEventListener('click', () => { closeSide(); window.location.href = '{{ url_for('home') }}'; });
-    loginBtn.addEventListener('click', () => { closeSide(); window.location.href = '{{ url_for('user_login') }}'; });
+    loginBtn.addEventListener('click', () => { closeSide(); window.location.href = '{{ url_for('home') }}'; });
 
     logoutBtn.addEventListener('click', () => {
       localStorage.removeItem('technician_name');
@@ -149,7 +149,7 @@
       localStorage.removeItem('burnt_done');
       localStorage.removeItem('voltage_done');
       closeSide();
-      window.location.href = '{{ url_for('user_login') }}';
+      window.location.href = '{{ url_for('home') }}';
     });
 
     function updateGenerateState() {
