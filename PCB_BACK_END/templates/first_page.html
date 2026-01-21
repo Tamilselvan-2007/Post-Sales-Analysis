@@ -24,8 +24,8 @@
   <div class="mode-box">
     <h1>Mode</h1>
     <div class="btn-container">
-      <button class="btn" onclick="window.location.href='{{ url_for('user_login') }}'">User</button>
-      <button class="btn" onclick="window.location.href='{{ url_for('admin_login') }}'">Edit</button>
+      <button class="btn" id="userBtn">User</button>
+      <button class="btn" id="adminBtn">Edit</button>
     </div>
   </div>
 
@@ -74,6 +74,46 @@
         a.addEventListener('click', () => { close(); });
       });
     })();
+
+    // Handle User button click
+    document.getElementById('userBtn').addEventListener('click', function () {
+      // Clear previous session flags
+      localStorage.removeItem('missing_done');
+      localStorage.removeItem('burnt_done');
+      localStorage.removeItem('voltage_done');
+
+      // Set default user credentials
+      try {
+        localStorage.setItem('technician_id', 'technician_1');
+        localStorage.setItem('technician_name', 'Mohan');
+        localStorage.setItem('technician_rating', '4/5');
+      } catch (e) {
+        console.error('Failed to set localStorage:', e);
+      }
+
+      // Navigate to dashboard
+      window.location.href = '{{ url_for("dashboard") }}';
+    });
+
+    // Handle Admin button click
+    document.getElementById('adminBtn').addEventListener('click', function () {
+      // Clear previous session flags
+      localStorage.removeItem('missing_done');
+      localStorage.removeItem('burnt_done');
+      localStorage.removeItem('voltage_done');
+
+      // Set admin credentials
+      try {
+        localStorage.setItem('technician_id', 'admin_1');
+        localStorage.setItem('technician_name', 'Admin');
+        localStorage.setItem('technician_rating', '5/5');
+      } catch (e) {
+        console.error('Failed to set localStorage:', e);
+      }
+
+      // Navigate to admin training area
+      window.location.href = '{{ url_for("admin_training_area") }}';
+    });
   </script>
 
 </body>
