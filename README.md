@@ -51,24 +51,34 @@ It uses **YOLO-based computer vision models** deployed on a **Flask backend**, p
 ---
 
 ## 📂 Project Structure
-Post-Sales-Analysis/
+┌──📦Post-Sales-Analysis/                      Root repository
 │
-├── PCB_BACK_END/
-│ ├── app.py
-│ ├── requirements.txt
-│ ├── model/
-│ │ ├── missing.pt
-│ │ ├── burnt.pt
-│ │ ├── load_models.py
-│ │ └── config.py
-│ ├── routes/
-│ │ ├── detect_routes.py
-│ │ ├── upload_routes.py
-│ │ └── debug_routes.py
-│ ├── utils/
-│ ├── static/
-│ └── templates/
+├── 📂PCB_BACK_END/                            Main application package
+│   │
+│   ├── 📂model/                               AI/ML model files & weights
+│   │
+│   ├── 📂routes/                              Flask API route definitions
+│   │
+│   ├── 📂static/                              CSS, JS, images & assets
+│   │
+│   ├── 📂 templates/                          HTML Jinja2 templates
+│   │
+│   ├── 📂utils/                               Helper functions & utilities
+│   │
+│   ├── __init__.py                            Package initializer
+│   ├── app.py                                 Flask application entry point
+│   ├── esp32_firmware.ino                     ESP32 hardware firmware (Arduino)
+│   ├── gunicorn.conf.py                       Gunicorn WSGI server config
+│   ├── test_detection.py                      PCB defect detection tests
+│   └── Procfile                               Process file (Heroku / Cloud)
 │
-└── README.md
+├── .dockerignore                              Files excluded from Docker build
+├── Dockerfile                                 Container build instructions (Gunicorn)
+├── README.md                                  Project documentation
+└── requirements.txt
 
+---
 
+## License
+
+This project is developed for educational and hackathon purposes.
