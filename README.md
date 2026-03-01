@@ -51,6 +51,7 @@ It uses **YOLO-based computer vision models** deployed on a **Flask backend**, p
 ---
 
 ## 📂 Project Structure
+```
 ┌──📦Post-Sales-Analysis/                      Root repository
 │
 ├── 📂PCB_BACK_END/                            Main application package
@@ -76,7 +77,7 @@ It uses **YOLO-based computer vision models** deployed on a **Flask backend**, p
 ├── Dockerfile                                 Container build instructions (Gunicorn)
 ├── README.md                                  Project documentation
 └── requirements.txt
-
+```
 ---
 
 ## License
